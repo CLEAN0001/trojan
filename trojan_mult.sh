@@ -55,7 +55,7 @@ http {
     #gzip  on;
     server {
         listen       80;
-        server_name  $your_domain;
+        server_name  ${your_domain}_ecc;
         root /usr/share/nginx/html;
         index index.php index.html index.htm;
     }
@@ -73,39 +73,39 @@ EOF
     fi
     if [ ! -d "/usr/src/trojan-cert" ]; then
         mkdir /usr/src/trojan-cert /usr/src/trojan-temp
-        mkdir /usr/src/trojan-cert/$your_domain
-        if [ ! -d "/usr/src/trojan-cert/$your_domain" ]; then
-            red "不存在/usr/src/trojan-cert/$your_domain目录"
+        mkdir /usr/src/trojan-cert/${your_domain}_ecc
+        if [ ! -d "/usr/src/trojan-cert/${your_domain}_ecc" ]; then
+            red "不存在/usr/src/trojan-cert/${your_domain}_ecc目录"
             exit 1
         fi
         curl https://get.acme.sh | sh
-        ~/.acme.sh/acme.sh  --register-account  -m test@$your_domain --server zerossl
-        ~/.acme.sh/acme.sh  --issue  -d $your_domain  --nginx
-        if test -s /root/.acme.sh/$your_domain/fullchain.cer; then
+        ~/.acme.sh/acme.sh  --register-account  -m test@${your_domain}_ecc --server zerossl
+        ~/.acme.sh/acme.sh  --issue  -d ${your_domain}_ecc  --nginx
+        if test -s /root/.acme.sh/${your_domain}_ecc/fullchain.cer; then
             cert_success="1"
         fi
-    elif [ -f "/usr/src/trojan-cert/$your_domain/fullchain.cer" ]; then
-        cd /usr/src/trojan-cert/$your_domain
+    elif [ -f "/usr/src/trojan-cert/${your_domain}_ecc/fullchain.cer" ]; then
+        cd /usr/src/trojan-cert/${your_domain}_ecc
         create_time=`stat -c %Y fullchain.cer`
         now_time=`date +%s`
         minus=$(($now_time - $create_time ))
         if [  $minus -gt 5184000 ]; then
             curl https://get.acme.sh | sh
-            ~/.acme.sh/acme.sh  --register-account  -m test@$your_domain --server zerossl
-            ~/.acme.sh/acme.sh  --issue  -d $your_domain  --nginx
-            if test -s /root/.acme.sh/$your_domain/fullchain.cer; then
+            ~/.acme.sh/acme.sh  --register-account  -m test@${your_domain}_ecc --server zerossl
+            ~/.acme.sh/acme.sh  --issue  -d ${your_domain}_ecc  --nginx
+            if test -s /root/.acme.sh/${your_domain}_ecc/fullchain.cer; then
                 cert_success="1"
             fi
         else 
-            green "检测到域名$your_domain证书存在且未超过60天，无需重新申请"
+            green "检测到域名${your_domain}_ecc证书存在且未超过60天，无需重新申请"
             cert_success="1"
         fi        
     else 
-        mkdir /usr/src/trojan-cert/$your_domain
+        mkdir /usr/src/trojan-cert/${your_domain}_ecc
         curl https://get.acme.sh | sh
-        ~/.acme.sh/acme.sh  --register-account  -m test@$your_domain --server zerossl
-        ~/.acme.sh/acme.sh  --issue  -d $your_domain  --nginx
-        if test -s /root/.acme.sh/$your_domain/fullchain.cer; then
+        ~/.acme.sh/acme.sh  --register-account  -m test@${your_domain}_ecc --server zerossl
+        ~/.acme.sh/acme.sh  --issue  -d ${your_domain}_ecc  --nginx
+        if test -s /root/.acme.sh/${your_domain}_ecc/fullchain.cer; then
             cert_success="1"
         fi
     fi
@@ -133,14 +133,14 @@ http {
     #gzip  on;
     server {
         listen       127.0.0.1:80;
-        server_name  $your_domain;
+        server_name  ${your_domain}_ecc;
         root /usr/share/nginx/html;
         index index.php index.html index.htm;
     }
     server {
         listen       0.0.0.0:80;
-        server_name  $your_domain;
-        return 301 https://$your_domain\$request_uri;
+        server_name  ${your_domain}_ecc;
+        return 301 https://${your_domain}_ecc\$request_uri;
     }
     
 }
@@ -170,7 +170,7 @@ EOF
     "run_type": "client",
     "local_addr": "127.0.0.1",
     "local_port": 1080,
-    "remote_addr": "$your_domain",
+    "remote_addr": "${your_domain}_ecc",
     "remote_port": 443,
     "password": [
         "$trojan_passwd"
@@ -211,8 +211,8 @@ EOF
     ],
     "log_level": 1,
     "ssl": {
-        "cert": "/usr/src/trojan-cert/$your_domain/fullchain.cer",
-        "key": "/usr/src/trojan-cert/$your_domain/private.key",
+        "cert": "/usr/src/trojan-cert/${your_domain}_ecc/fullchain.cer",
+        "key": "/usr/src/trojan-cert/${your_domain}_ecc/private.key",
         "key_password": "",
         "cipher_tls13":"TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
         "prefer_server_cipher": true,
@@ -269,9 +269,9 @@ EOF
         chmod +x ${systempwd}trojan.service
         systemctl enable trojan.service
         cd /root
-        ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
-            --key-file   /usr/src/trojan-cert/$your_domain/private.key \
-            --fullchain-file  /usr/src/trojan-cert/$your_domain/fullchain.cer \
+        ~/.acme.sh/acme.sh  --installcert  -d  ${your_domain}_ecc   \
+            --key-file   /usr/src/trojan-cert/${your_domain}_ecc/private.key \
+            --fullchain-file  /usr/src/trojan-cert/${your_domain}_ecc/fullchain.cer \
             --reloadcmd  "systemctl restart trojan"	
         green "==========================================================================="
         green "windows客户端路径/usr/src/trojan-cli/trojan-cli.zip，此客户端已配置好所有参数"
@@ -430,13 +430,13 @@ function repair_cert(){
     real_addr=`ping ${your_domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}'`
     local_addr=`curl ipv4.icanhazip.com`
     if [ $real_addr == $local_addr ] ; then
-        ~/.acme.sh/acme.sh  --register-account  -m test@$your_domain --server zerossl
-        ~/.acme.sh/acme.sh  --issue  -d $your_domain  --standalone
-        ~/.acme.sh/acme.sh  --installcert  -d  $your_domain   \
-            --key-file   /usr/src/trojan-cert/$your_domain/private.key \
-            --fullchain-file /usr/src/trojan-cert/$your_domain/fullchain.cer \
+        ~/.acme.sh/acme.sh  --register-account  -m test@${your_domain}_ecc --server zerossl
+        ~/.acme.sh/acme.sh  --issue  -d ${your_domain}_ecc  --standalone
+        ~/.acme.sh/acme.sh  --installcert  -d  ${your_domain}_ecc   \
+            --key-file   /usr/src/trojan-cert/${your_domain}_ecc/private.key \
+            --fullchain-file /usr/src/trojan-cert/${your_domain}_ecc/fullchain.cer \
             --reloadcmd  "systemctl restart trojan"
-        if test -s /usr/src/trojan-cert/$your_domain/fullchain.cer; then
+        if test -s /usr/src/trojan-cert/${your_domain}_ecc/fullchain.cer; then
             green "证书申请成功"
             systemctl restart trojan
             systemctl start nginx
