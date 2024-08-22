@@ -18,3 +18,7 @@ troooojan
           修改文件/usr/src/trojan/server.conf
 
           systemctl restart trojan
+
+5. 域名购买地址
+
+         https://www.namecheap.com/
